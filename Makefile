@@ -15,6 +15,8 @@
 #                                                                             #
 # REPORTER    : Mocha reporter to use for test output.                        #
 #                                                                             #
+# MOZPERFOUT  : File path to output mozperf data. Empty mean stdout.          #
+#                                                                             #
 # MARIONETTE_RUNNER_HOST : The Marionnette runner host.                       #
 #                          Current values can be 'marionette-b2gdesktop-host' #
 #                          and 'marionette-device-host'                       #
@@ -139,6 +141,8 @@ NPM_REGISTRY?=http://registry.npmjs.org
 # Ensure that NPM only logs warnings and errors
 export npm_config_loglevel=warn
 MARIONETTE_RUNNER_HOST?=marionette-b2gdesktop-host
+TEST_MANIFEST?=./shared/test/integration/travis-manifest.json
+MOZPERFOUT?=""
 
 GAIA_INSTALL_PARENT?=/system/b2g
 
@@ -695,11 +699,12 @@ b2g: node_modules/.bin/mozilla-download
 test-integration: b2g $(PROFILE_FOLDER)
 	NPM_REGISTRY=$(NPM_REGISTRY) ./bin/gaia-marionette $(shell find . -path "*$(TEST_INTEGRATION_APP_NAME)/test/marionette/*_test.js") \
 		--host $(MARIONETTE_RUNNER_HOST) \
+		--manifest $(TEST_MANIFEST) \
 		--reporter $(REPORTER)
 
 .PHONY: test-perf
 test-perf:
-	APPS="$(APPS)" MARIONETTE_RUNNER_HOST=$(MARIONETTE_RUNNER_HOST) GAIA_DIR="`pwd`" NPM_REGISTRY=$(NPM_REGISTRY) ./bin/gaia-perf-marionette
+	MOZPERFOUT="$(MOZPERFOUT)" APPS="$(APPS)" MARIONETTE_RUNNER_HOST=$(MARIONETTE_RUNNER_HOST) GAIA_DIR="`pwd`" NPM_REGISTRY=$(NPM_REGISTRY) ./bin/gaia-perf-marionette
 
 .PHONY: tests
 tests: applications-data offline

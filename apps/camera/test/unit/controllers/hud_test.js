@@ -7,15 +7,13 @@ suite.skip('controllers/hud', function() {
     var self = this;
     req([
       'controllers/hud',
-      'camera',
       'views/hud',
       'views/controls',
       'views/viewfinder'
-    ], function(HudController, Camera, HudView, ControlsView, ViewfinderView) {
+    ], function(HudController, HudView, ControlsView, ViewfinderView) {
 
       self.modules = {
         HudController: HudController,
-        Camera: Camera,
         HudView: HudView,
         ControlsView: ControlsView,
         ViewfinderView: ViewfinderView
@@ -27,8 +25,18 @@ suite.skip('controllers/hud', function() {
   setup(function() {
     var modules = this.modules;
     var HudController = modules.HudController.HudController;
+
     this.app = {
-      camera: new modules.Camera(),
+      camera: {
+        on: sinon.spy(),
+        get: sinon.stub(),
+        state: { on: sinon.spy() },
+        hasFrontCamera: sinon.stub(),
+        toggleFlash: sinon.stub(),
+        toggleCamera: sinon.stub(),
+        getFlashMode: sinon.stub(),
+        loadStreamInto: sinon.stub()
+      },
       views: {
         viewfinder: new modules.ViewfinderView(),
         controls: new modules.ControlsView(),
@@ -45,13 +53,8 @@ suite.skip('controllers/hud', function() {
     this.viewfinder = this.app.views.viewfinder;
     this.camera = this.app.camera;
 
-    sinon.stub(this.camera, 'getDeviceStorageState');
-    sinon.stub(this.camera, 'isSpaceOnStorage');
-
-    // Spys
+    // Stub all methods from dependencies
     this.sandbox = sinon.sandbox.create();
-    this.sandbox.stub(this.app.camera);
-    this.sandbox.stub(this.app.camera.state);
     this.sandbox.stub(this.app.views.viewfinder);
     this.sandbox.stub(this.app.views.controls);
     this.sandbox.stub(this.app.views.hud);
@@ -71,9 +74,9 @@ suite.skip('controllers/hud', function() {
       assert.ok(hud.on.calledWith('flashToggle'));
       assert.ok(hud.on.calledWith('cameraToggle'));
       assert.ok(camera.on.calledWith('configured'));
-      assert.ok(camera.on.calledWith('previewResumed'));
-      assert.ok(camera.on.calledWith('preparingToTakePicture'));
-      assert.ok(camera.state.on.calledWith('change:recording'));
+      assert.ok(camera.on.calledWith('previewresumed'));
+      assert.ok(camera.on.calledWith('preparingtotakepicture'));
+      assert.ok(camera.on.calledWith('change:recording'));
     });
   });
 
@@ -92,7 +95,7 @@ suite.skip('controllers/hud', function() {
 
     test('Should set the hud flash mode with' +
          'the current flash mode', function() {
-      this.camera.getFlashMode.returns('some-flash-mode');
+      this.camera.get.withArgs('flash').returns('some-flash-mode');
       this.controller.onCameraConfigured();
       assert.ok(this.hud.setFlashMode.calledWith('some-flash-mode'));
     });
